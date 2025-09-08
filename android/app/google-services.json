@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "751391032737",
+    "project_id": "evolve-1c4c2",
+    "storage_bucket": "evolve-1c4c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:751391032737:android:3efd73a375085b0899b7e0",
+        "android_client_info": {
+          "package_name": "com.example.evolve"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "751391032737-qjlhdfd9i2nsnvl0a84nq5ip6n2182pq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.evolve",
+            "certificate_hash": "5e5cc591b858efafbda78f26c6386d8e57747707"
+          }
+        },
+        {
+          "client_id": "751391032737-hbmuv7m1usparbu644g3l762puq8el4u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTzgdrspn9bCzPa1wcdKemyL204rtyIc4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "751391032737-hbmuv7m1usparbu644g3l762puq8el4u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,53 @@
+name: evolve
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_thingspeak: ^1.1.0
+  http: ^1.3.0
+  firebase_core: ^3.4.0
+  firebase_auth: ^5.3.1
+  google_sign_in: ^6.2.1
+
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/fg.png"         # use the file you actually have
+  adaptive_icon_foreground: "assets/icon/fg.png" # (works, but JPG has no transparency)
+  adaptive_icon_background: "#FFFFFF"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+    - assets/icon/google.png
+  
+  # APPLY FONTS TO USE
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-Black.ttf
+          weight: 900
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf
