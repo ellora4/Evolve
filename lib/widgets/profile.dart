@@ -10,13 +10,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
 
-  String _name = "User";
-  String _email = "user@gmail.com";
-  String _bio = "This is my bio";
-  String _phone = "09123456789";
+  String _name = "(User)";
+  String _email = "(user@gmail.com)";
+  String _bio = "(This is my bio)";
+  String _phone = "(09123456789)";
+  String _unit = "(BYD Sealion 5 DM-i)";
 
   
-  final String _avatarPath = "assets/avatar.png";
+  String _avatarPath = "assets/avatar.png";
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 // If asset not found, fallback to icon
                 onBackgroundImageError: (_, __) => const Icon(
                   Icons.person,
-                  size: 60,
+                  size: 90,
                   color: Colors.white,
                 ),
               ),
@@ -79,6 +80,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 validator: (value) =>
                     value == null || value.isEmpty ? "Enter your phone number" : null,
                 onSaved: (value) => _phone = value ?? "",
+              ),
+              const SizedBox(height: 20),
+
+              _buildTextField(
+                label: "Car Unit",
+                initialValue: _unit,
+                keyboardType: TextInputType.text,
+                validator: (value) =>
+                    value == null || value.isEmpty ? "Enter your unit" : null,
+                onSaved: (value) => _unit = value ?? "",
               ),
               const SizedBox(height: 20),
 

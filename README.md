@@ -1,18 +1,18 @@
-# evolve
+# Evolve
 
-A new Flutter project.
+A research of E-VOLVE: DEVELOPING A SMART AND SUSTAINABLE EV CHARGING NAVIGATOR FOR ENHANCED ACCESSIBILITY
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+## What is Evolve
 
-A few resources to get you started if this is your first Flutter project:
+The primary objective of this study is to develop E-Volve, a mobile application that will optimize EV charging b addressing limitations in current platforms.
 
-Testing - Github push
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+By:
+Aguirre, J.
+Florentino, J.
+Mendoza, R.
+Rodriguez, A.
+Soria, A.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Prof. Amador, P.

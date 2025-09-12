@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
-import 'maps.dart';
+import 'favoritemaps.dart';
 import 'settings.dart';
 
 class Sidebar extends StatelessWidget {

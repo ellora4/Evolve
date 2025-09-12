@@ -7,7 +7,7 @@ class MapsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Maps"),
+        title: const Text("Favorite"),
         backgroundColor: const Color.fromARGB(255, 228, 204, 96),
         elevation: 0,
         centerTitle: true,
