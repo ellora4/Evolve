@@ -5,7 +5,7 @@ A research of E-VOLVE: DEVELOPING A SMART AND SUSTAINABLE EV CHARGING NAVIGATOR 
 
 ## What is Evolve
 
-The primary objective of this study is to develop E-Volve, a mobile application that will optimize EV charging b addressing limitations in current platforms.
+The primary objective of this study is to develop E-Volve, a mobile application that will optimize EV charging by addressing limitations in current platforms.
 
 
 By:
