@@ -17,7 +17,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _unit = "(BYD Sealion 5 DM-i)";
 
   
-  String _avatarPath = "assets/avatar.png";
+  final String _avatarPath = "assets/avatar.png";
 
   @override
   Widget build(BuildContext context) {

@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
 import 'loginpage.dart';
 import 'signinpage.dart';
-import 'homepage.dart';
 import 'package:evolve/widgets/primary_button.dart';
 import 'package:evolve/widgets/google_button.dart';
 import 'package:evolve/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   Future<void> _google(BuildContext context) async {
     try {
-      final res = await AuthService.signInWithGoogle();
+      final res = await AuthService.signInWithGoogle(allowSilent: false);
       if (res == null) return; // cancelled
       if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+      // Return to root and let AuthGate decide
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return;
+      final code = e.code;
+      final msg = switch (code) {
+        'account-exists-with-different-credential' =>
+            'This email is already registered with a different method. Sign in with that method, then link Google in Settings.',
+        'credential-already-in-use' => 'That Google account is already linked to another user.',
+        'network-request-failed' => 'Network error. Check your connection.',
+        _ => 'Google sign-in failed: $code',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
       );
     } catch (e) {
       if (!context.mounted) return;

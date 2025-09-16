@@ -3,10 +3,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:evolve/screens/welcomepage.dart';
+import 'package:evolve/screens/homepage.dart';
+import 'package:evolve/screens/verify_email.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // uses google-services.json on Android
+  // Localize Firebase Auth emails (and remove X-Firebase-Locale warning)
+  try { FirebaseAuth.instance.setLanguageCode('en'); } catch (_) {}
   runApp(const MyApp());
 }
 
@@ -35,6 +39,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+      // Start on an auth gate so a signed-in user stays signed in
+      // across app restarts, and signed-out users see Welcome.
       home: const AuthGate(),
     );
   }
@@ -47,41 +53,24 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      // Use userChanges so profile updates (like emailVerified) refresh UI
+      stream: FirebaseAuth.instance.userChanges(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
         final user = snap.data;
-        return user == null ? const WelcomePage() : const _HomePlaceholder();
+        if (user == null) return const WelcomePage();
+        final providers = user.providerData.map((p) => p.providerId).toList();
+        final usesPassword = providers.contains('password');
+        if (usesPassword && !(user.emailVerified)) {
+          return const VerifyEmailPage();
+        }
+        return const HomePage();
       },
     );
   }
 }
 
-/// Temp home so the app compiles now. We'll replace this later.
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('E-Volve'),
-        actions: [
-          IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Text('Signed in as ${user?.email ?? user?.uid ?? 'Anonymous'}'),
-      ),
-    );
-  }
-}
+/// You can add global sign-out for testing only like below (commented):
+/// if (kDebugMode) await FirebaseAuth.instance.signOut();

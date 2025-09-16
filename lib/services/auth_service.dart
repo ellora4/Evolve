@@ -46,7 +46,11 @@ class AuthService {
   /// Full sign-out (Firebase + Google session).
   static Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
-    try { await _google.signOut(); } catch (_) {/* ignore */}
+    try {
+      await _google.signOut();
+      // Also revoke to avoid auto-reuse of the last account
+      await _google.disconnect();
+    } catch (_) {/* ignore */}
   }
 
   /// Quick check if a Google account is cached on device.

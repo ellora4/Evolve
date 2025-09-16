@@ -38,24 +38,37 @@ class _SignUpPageState extends State<SignUpPage> {
     }
     setState(() => _loading = true);
     try {
+      final email = _emailController.text.trim();
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
       );
       await FirebaseAuth.instance.currentUser
           ?.updateDisplayName(_nameController.text.trim());
-      if (!mounted) return;
-      Navigator.pop(context); // AuthGate will route to Home
-    } on FirebaseAuthException catch (e) {
-      final msg = switch (e.code) {
-        'email-already-in-use' => 'Email already registered.',
-        'invalid-email' => 'Invalid email.',
-        'weak-password' => 'Password too weak (min 6).',
-        _ => 'Sign-up failed: ${e.code}',
-      };
+      // Send verification email and return to root so AuthGate shows VerifyEmailPage
+      await FirebaseAuth.instance.currentUser?.sendEmailVerification();
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verification email sent. Please verify.')),
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        if (mounted) {
+          const text = 'Email already in use. If you previously used Google for this email, tap "Continue with Google" on the Welcome screen, then add a password from Settings.';
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(text)));
+        }
+      } else {
+        final msg = switch (e.code) {
+          'invalid-email' => 'Invalid email.',
+          'weak-password' => 'Password too weak (min 6).',
+          _ => 'Sign-up failed: ${e.code}',
+        };
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        }
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -64,9 +77,23 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _signupGoogle() async {
     try {
-      await AuthService.signInWithGoogle();
+      final cred = await AuthService.signInWithGoogle(allowSilent: false);
       if (!mounted) return;
-      Navigator.pop(context);
+      if (cred == null) return; // user cancelled picker
+      // Back to root so AuthGate decides next screen
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final code = e.code;
+      final msg = switch (code) {
+        'account-exists-with-different-credential' =>
+            'Use your existing sign-in method, then link Google in settings.',
+        'network-request-failed' => 'Network error. Check your connection.',
+        _ => 'Google sign-in failed: $code',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

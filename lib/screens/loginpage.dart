@@ -34,7 +34,8 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      Navigator.pop(context); // AuthGate will route to Home
+      // Return to root; AuthGate will route to Home or Verify
+      Navigator.of(context).popUntil((r) => r.isFirst);
     } on FirebaseAuthException catch (e) {
       final msg = switch (e.code) {
         'user-not-found' => 'No account for that email.',
@@ -54,9 +55,23 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _loginGoogle() async {
     try {
-      await AuthService.signInWithGoogle();
+      final cred = await AuthService.signInWithGoogle(allowSilent: false);
       if (!mounted) return;
-      Navigator.pop(context); // AuthGate will route
+      if (cred == null) return; // user cancelled picker
+      // Return to root; AuthGate will route accordingly
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final code = e.code;
+      final msg = switch (code) {
+        'account-exists-with-different-credential' =>
+            'Use your existing sign-in method, then link Google in settings.',
+        'network-request-failed' => 'Network error. Check your connection.',
+        _ => 'Google sign-in failed: $code',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

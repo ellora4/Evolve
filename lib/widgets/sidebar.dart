@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:evolve/services/auth_service.dart';
 import 'profile.dart';
 import 'favoritemaps.dart';
 import 'settings.dart';
+import 'package:evolve/screens/welcomepage.dart';
 
 class Sidebar extends StatelessWidget {
   const Sidebar({super.key});
@@ -86,9 +88,17 @@ class Sidebar extends StatelessWidget {
                   'Logout',
                   style: TextStyle(color: Colors.white),
                 ),
-                onTap: () {
+                onTap: () async {
+                  // Close the drawer first
                   Navigator.pop(context);
-                  Navigator.pushReplacementNamed(context, "/login");
+                  await AuthService.signOut();
+                  if (context.mounted) {
+                    // Reset stack so WelcomePage is the only route
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const WelcomePage()),
+                      (route) => false,
+                    );
+                  }
                 },
               ),
             ],
