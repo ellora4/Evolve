@@ -13,199 +13,177 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
   String _selectedLanguage = "English";
 
-  final _languages = ["English", "Spanish", "French", "Filipino"];
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final email = user?.email ?? '(no email)';
+  final displayName = user?.displayName ?? 'User';
     final providers = user?.providerData.map((p) => p.providerId).toSet() ?? {};
     final hasGoogle = providers.contains('google.com');
     final hasPassword = providers.contains('password');
     final emailVerified = user?.emailVerified ?? false;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-        backgroundColor: Colors.deepOrange,
-        centerTitle: true,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.white,
       body: ListView(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         children: [
-          // Account
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Account', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text('Email: $email'),
-                  Text('Verified: ${emailVerified ? 'Yes' : 'No'}'),
-                  const SizedBox(height: 8),
-                  if (!hasGoogle)
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.link),
-                      label: const Text('Link Google account'),
-                      onPressed: () async {
-                        try {
-                          await AuthService.linkWithGoogle();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Google linked.')),
-                          );
-                          setState(() {});
-                        } on FirebaseAuthException catch (e) {
-                          final msg = e.code == 'credential-already-in-use'
-                              ? 'That Google account is already linked elsewhere.'
-                              : 'Failed: ${e.code}';
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(msg)),
-                          );
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed: $e')),
-                          );
-                        }
-                      },
-                    ),
-                  const SizedBox(height: 8),
-                  if (hasPassword)
-                    OutlinedButton(
-                      onPressed: () async {
-                        if (user?.email == null) return;
-                        try {
-                          await FirebaseAuth.instance
-                              .sendPasswordResetEmail(email: user!.email!);
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Password reset email sent.')),
-                          );
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed: $e')),
-                          );
-                        }
-                      },
-                      child: const Text('Change password'),
-                    )
-                  else
-                    OutlinedButton(
-                      onPressed: () async {
-                        if (user?.email == null) return;
-                        final controller1 = TextEditingController();
-                        final controller2 = TextEditingController();
-                        final ok = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) {
-                            return AlertDialog(
-                              title: const Text('Add password'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    controller: controller1,
-                                    obscureText: true,
-                                    decoration: const InputDecoration(labelText: 'New password (min 6)'),
-                                  ),
-                                  TextField(
-                                    controller: controller2,
-                                    obscureText: true,
-                                    decoration: const InputDecoration(labelText: 'Confirm password'),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx, true),
-                                  child: const Text('Save'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                        if (ok != true) return;
-                        final p1 = controller1.text;
-                        final p2 = controller2.text;
-                        if (p1.length < 6 || p1 != p2) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Passwords must match and be 6+ chars.')),
-                          );
-                          return;
-                        }
-                        try {
-                          final cred = EmailAuthProvider.credential(email: user!.email!, password: p1);
-                          await user.linkWithCredential(cred);
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(content: Text('Password added.')));
-                          setState(() {});
-                        } on FirebaseAuthException catch (e) {
-                          final msg = switch (e.code) {
-                            'requires-recent-login' => 'Please sign in again, then retry.',
-                            'provider-already-linked' => 'Password already linked.',
-                            _ => 'Failed: ${e.code}',
-                          };
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                        }
-                      },
-                      child: const Text('Add password'),
-                    ),
-                  if (hasPassword && !emailVerified)
-                    TextButton(
-                      onPressed: () async {
-                        try {
-                          await user?.sendEmailVerification();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Verification email sent.')),
-                          );
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed: $e')),
-                          );
-                        }
-                      },
-                      child: const Text('Resend verification email'),
-                    ),
-                ],
+          // Avatar and Name
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: const Color(0xFFB6A6A6),
+                child: Text(
+                  displayName.isNotEmpty ? displayName[0] : '',
+                  style: const TextStyle(fontSize: 24, color: Colors.white),
+                ),
               ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Color(0xFF7B7B7B),
+                  ),
+                  softWrap: true,
+                  maxLines: 2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Settings',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: Color(0xFF7B7B7B),
             ),
           ),
-          SwitchListTile(
-            title: const Text("Enable Notifications"),
-            value: _notificationsEnabled,
-            activeThumbColor: Colors.deepOrange,
-            onChanged: (v) => setState(() => _notificationsEnabled = v),
+          const Divider(thickness: 1),
+          const SizedBox(height: 8),
+          // General Section
+          const Text(
+            'General',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: Colors.grey,
+            ),
           ),
           ListTile(
-            title: const Text("Language"),
-            trailing: DropdownButton<String>(
-              value: _selectedLanguage,
-              underline: const SizedBox(),
-              items: _languages
-                  .map((lang) => DropdownMenuItem(
-                        value: lang,
-                        child: Text(lang),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _selectedLanguage = v!),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Location', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () {},
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Change Password', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () async {
+              if (hasPassword && user?.email != null) {
+                try {
+                  await FirebaseAuth.instance.sendPasswordResetEmail(email: user!.email!);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Password reset email sent.')),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed: $e')),
+                  );
+                }
+              }
+            },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Bind Account', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () async {
+              if (!hasGoogle) {
+                try {
+                  await AuthService.linkWithGoogle();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Google linked.')),
+                  );
+                  setState(() {});
+                } on FirebaseAuthException catch (e) {
+                  final msg = e.code == 'credential-already-in-use'
+                      ? 'That Google account is already linked elsewhere.'
+                      : 'Failed: ${e.code}';
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(msg)),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed: $e')),
+                  );
+                }
+              }
+            },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w600)),
+            trailing: Switch(
+              value: _notificationsEnabled,
+              onChanged: (v) => setState(() => _notificationsEnabled = v),
+              activeColor: const Color(0xFFB6A6A6),
             ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Help & Support', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () {},
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('About Us', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () {},
+          ),
+          const Divider(thickness: 1),
+          const SizedBox(height: 8),
+          // Feedback Section
+          const Text(
+            'Feedback',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Report Issues', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () {},
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Send Feedback', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () {},
+          ),
+          const SizedBox(height: 24),
+          // Log out
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () async {
+              await AuthService.signOut();
+              if (context.mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+          ),
+          const Divider(thickness: 1),
+          TextButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            child: const Text('← go back', style: TextStyle(fontSize: 12, color: Colors.grey)),
           ),
         ],
       ),
