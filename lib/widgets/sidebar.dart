@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:evolve/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile.dart';
 import 'favoritemaps.dart';
 import 'settings.dart';
-import 'package:evolve/screens/welcomepage.dart';
 
 class Sidebar extends StatelessWidget {
   const Sidebar({super.key});

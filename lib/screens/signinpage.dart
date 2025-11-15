@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'welcomepage.dart';
 import 'package:evolve/services/auth_service.dart';
+import 'package:evolve/services/user_profile_service.dart';
 import 'package:evolve/widgets/google_button.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -39,17 +40,27 @@ class _SignUpPageState extends State<SignUpPage> {
     setState(() => _loading = true);
     try {
       final email = _emailController.text.trim();
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: _passwordController.text,
       );
-      await FirebaseAuth.instance.currentUser
-          ?.updateDisplayName(_nameController.text.trim());
+      final user = credential.user ?? FirebaseAuth.instance.currentUser;
+      final name = _nameController.text.trim();
+      if (user != null) {
+        await user.updateDisplayName(name);
+        await UserProfileService.ensureUserDocument(
+          user,
+          nameOverride: name,
+          emailOverride: email,
+        );
+        await user.sendEmailVerification();
+      }
       // Send verification email and return to root so AuthGate shows VerifyEmailPage
-      await FirebaseAuth.instance.currentUser?.sendEmailVerification();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification email sent. Please verify.')),
+          const SnackBar(
+              content: Text('Verification email sent. Please verify.')),
         );
       }
       if (!mounted) return;
@@ -57,8 +68,10 @@ class _SignUpPageState extends State<SignUpPage> {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
         if (mounted) {
-          const text = 'Email already in use. If you previously used Google for this email, tap "Continue with Google" on the Welcome screen, then add a password from Settings.';
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(text)));
+          const text =
+              'Email already in use. If you previously used Google for this email, tap "Continue with Google" on the Welcome screen, then add a password from Settings.';
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text(text)));
         }
       } else {
         final msg = switch (e.code) {
@@ -67,7 +80,8 @@ class _SignUpPageState extends State<SignUpPage> {
           _ => 'Sign-up failed: ${e.code}',
         };
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(msg)));
         }
       }
     } finally {
@@ -87,7 +101,7 @@ class _SignUpPageState extends State<SignUpPage> {
       final code = e.code;
       final msg = switch (code) {
         'account-exists-with-different-credential' =>
-            'Use your existing sign-in method, then link Google in settings.',
+          'Use your existing sign-in method, then link Google in settings.',
         'network-request-failed' => 'Network error. Check your connection.',
         _ => 'Google sign-in failed: $code',
       };
@@ -133,7 +147,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   color: Colors.deepOrange,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 4))
+                    BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(0, 4))
                   ],
                 ),
                 child: Form(
@@ -142,13 +159,18 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Column(
                       children: [
                         _buildField(
-                          _nameController, Icons.person, "Name",
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? "Enter your name" : null,
+                          _nameController,
+                          Icons.person,
+                          "Name",
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? "Enter your name"
+                              : null,
                         ),
                         const SizedBox(height: 16),
                         _buildField(
-                          _emailController, Icons.email, "Email Address",
+                          _emailController,
+                          Icons.email,
+                          "Email Address",
                           validator: (v) {
                             if (v == null || v.isEmpty) return "Enter email";
                             if (!v.contains("@")) return "Enter valid email";
@@ -157,22 +179,33 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         const SizedBox(height: 16),
                         _buildField(
-                          _passwordController, Icons.lock, "Password",
+                          _passwordController,
+                          Icons.lock,
+                          "Password",
                           isPassword: true,
                           obscure: _obscure1,
-                          onToggle: () => setState(() => _obscure1 = !_obscure1),
-                          validator: (v) =>
-                              (v == null || v.length < 6) ? "Password must be 6+ chars" : null,
+                          onToggle: () =>
+                              setState(() => _obscure1 = !_obscure1),
+                          validator: (v) => (v == null || v.length < 6)
+                              ? "Password must be 6+ chars"
+                              : null,
                         ),
                         const SizedBox(height: 16),
                         _buildField(
-                          _confirmController, Icons.lock, "Confirm Password",
+                          _confirmController,
+                          Icons.lock,
+                          "Confirm Password",
                           isPassword: true,
                           obscure: _obscure2,
-                          onToggle: () => setState(() => _obscure2 = !_obscure2),
+                          onToggle: () =>
+                              setState(() => _obscure2 = !_obscure2),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return "Re-enter password";
-                            if (v != _passwordController.text) return "Passwords do not match";
+                            if (v == null || v.isEmpty) {
+                              return "Re-enter password";
+                            }
+                            if (v != _passwordController.text) {
+                              return "Passwords do not match";
+                            }
                             return null;
                           },
                         ),
@@ -181,8 +214,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           onTap: _loading ? null : _signupEmail,
                           child: Container(
                             width: double.infinity,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(30),

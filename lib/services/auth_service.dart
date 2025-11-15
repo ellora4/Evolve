@@ -1,28 +1,37 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'user_profile_service.dart';
+
 class AuthService {
   static final _google = GoogleSignIn(scopes: ['email']);
 
   /// Sign in with Google. If [allowSilent] is true, tries a background
   /// sign-in first (no account picker) and falls back to the picker.
-  static Future<UserCredential?> signInWithGoogle({bool allowSilent = true}) async {
+  static Future<UserCredential?> signInWithGoogle(
+      {bool allowSilent = true}) async {
     GoogleSignInAccount? acc;
     if (allowSilent) {
       try {
         acc = await _google.signInSilently(reAuthenticate: true);
       } catch (_) {/* ignore */}
     }
-    acc ??= await _google.signIn();        // null if user cancels
+    acc ??= await _google.signIn(); // null if user cancels
     if (acc == null) return null;
 
     final auth = await acc.authentication;
     final cred = GoogleAuthProvider.credential(
-      idToken: auth.idToken, accessToken: auth.accessToken,
+      idToken: auth.idToken,
+      accessToken: auth.accessToken,
     );
 
     try {
-      return await FirebaseAuth.instance.signInWithCredential(cred);
+      final result = await FirebaseAuth.instance.signInWithCredential(cred);
+      final user = result.user;
+      if (user != null) {
+        await UserProfileService.ensureUserDocument(user);
+      }
+      return result;
     } on FirebaseAuthException {
       // If the email already exists with another provider, you can link:
       // if (e.code == 'account-exists-with-different-credential') { ... }
@@ -36,7 +45,8 @@ class AuthService {
     if (acc == null) return null;
     final auth = await acc.authentication;
     final cred = GoogleAuthProvider.credential(
-      idToken: auth.idToken, accessToken: auth.accessToken,
+      idToken: auth.idToken,
+      accessToken: auth.accessToken,
     );
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return null;

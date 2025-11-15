@@ -11,17 +11,14 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
-  String _selectedLanguage = "English";
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email ?? '(no email)';
   final displayName = user?.displayName ?? 'User';
     final providers = user?.providerData.map((p) => p.providerId).toSet() ?? {};
     final hasGoogle = providers.contains('google.com');
     final hasPassword = providers.contains('password');
-    final emailVerified = user?.emailVerified ?? false;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -134,7 +131,7 @@ class _SettingsPageState extends State<SettingsPage> {
             trailing: Switch(
               value: _notificationsEnabled,
               onChanged: (v) => setState(() => _notificationsEnabled = v),
-              activeColor: const Color(0xFFB6A6A6),
+              activeThumbColor: const Color(0xFFB6A6A6),
             ),
           ),
           ListTile(

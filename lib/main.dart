@@ -1,16 +1,22 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+import 'config/map_config.dart';
 import 'package:evolve/screens/welcomepage.dart';
 import 'package:evolve/screens/homepage.dart';
 import 'package:evolve/screens/verify_email.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MapboxOptions.setAccessToken(MapConfig.accessToken);
   await Firebase.initializeApp(); // uses google-services.json on Android
   // Localize Firebase Auth emails (and remove X-Firebase-Locale warning)
-  try { FirebaseAuth.instance.setLanguageCode('en'); } catch (_) {}
+  try {
+    FirebaseAuth.instance.setLanguageCode('en');
+  } catch (_) {}
   runApp(const MyApp());
 }
 
@@ -24,18 +30,21 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'E-Volve',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
+        colorScheme:
+            ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
         useMaterial3: true,
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            minimumSize: const ui.Size(double.infinity, 52),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            minimumSize: const ui.Size(double.infinity, 52),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
       ),
@@ -57,7 +66,8 @@ class AuthGate extends StatelessWidget {
       stream: FirebaseAuth.instance.userChanges(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
         final user = snap.data;
         if (user == null) return const WelcomePage();

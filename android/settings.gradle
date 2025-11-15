@@ -26,4 +26,47 @@ plugins {
     id "org.jetbrains.kotlin.android" version "1.8.22" apply false
 }
 
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url = uri("https://storage.googleapis.com/download.flutter.io")
+        }
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            def resolveToken = {
+                def localFile = rootDir.toPath().resolve("local.properties").toFile()
+                if (localFile.exists()) {
+                    def localProps = new Properties()
+                    localFile.withInputStream { localProps.load(it) }
+                    def fromFile = localProps.getProperty("MAPBOX_DOWNLOADS_TOKEN") ?:
+                            localProps.getProperty("mapbox.downloads.token")
+                    if (fromFile) {
+                        return fromFile
+                    }
+                }
+                if (gradle.startParameter.projectProperties.containsKey("MAPBOX_DOWNLOADS_TOKEN")) {
+                    return gradle.startParameter.projectProperties.get("MAPBOX_DOWNLOADS_TOKEN")
+                }
+                return System.getenv("MAPBOX_DOWNLOADS_TOKEN")
+            }
+            def mapboxToken = resolveToken()
+            if (!mapboxToken) {
+                throw new GradleException(
+                        "Mapbox downloads token is not set. Add MAPBOX_DOWNLOADS_TOKEN to local.properties, "
+                                + "pass -PMAPBOX_DOWNLOADS_TOKEN=..., or export it as an environment variable.")
+            }
+            credentials {
+                username = "mapbox"
+                password = mapboxToken
+            }
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+}
+
 include ":app"
