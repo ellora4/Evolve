@@ -5,11 +5,17 @@ import 'package:evolve/config/map_config.dart';
 import 'package:evolve/models/charging_station.dart';
 import 'package:evolve/services/favorites_service.dart';
 import 'package:evolve/widgets/sidebar.dart';
+<<<<<<< HEAD
+import 'package:battery_plus/battery_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+=======
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:http/http.dart' as http;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:url_launcher/url_launcher.dart';
+>>>>>>> 4d63c16b6e225fd4e220806ea64d95904ad04587
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,6 +27,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final FavoritesService _favoritesService = FavoritesService.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  // Battery charge for testing purposes. Modify this value to simulate phone charge.
+  int _batteryCharge = 100;
+  final Battery _battery = Battery();
+  String _userName = 'User';
+  late Timer _batteryUpdateTimer;
 
   mapbox.MapboxMap? _mapboxMap;
   mapbox.PointAnnotationManager? _pointManager;
@@ -526,7 +537,169 @@ class _SearchBar extends StatelessWidget {
                 ),
               ),
             ),
+            // Name tag card anchored near the bottom-left (like the provided screenshot)
+            Positioned(
+              left: 25,
+              right: 25,
+              bottom: 50,
+              child: _NameTag(
+                name: _userName,
+                avatarColor: Colors.brown.shade300,
+                charge: _batteryCharge,
+                // No tap callback; battery updates automatically
+                onTap: null,
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch initial battery level and user name
+    _updateBatteryLevel();
+    _loadUserName();
+    
+    // Set up periodic battery update every 3 seconds
+    _batteryUpdateTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _updateBatteryLevel(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _batteryUpdateTimer.cancel();
+    super.dispose();
+  }
+
+  Future<void> _updateBatteryLevel() async {
+    try {
+      final level = await _battery.batteryLevel;
+      if (mounted) {
+        setState(() {
+          _batteryCharge = level.clamp(0, 100);
+        });
+      }
+    } catch (e) {
+      // If fetching fails (e.g., on web or unsupported platform), leave the value as-is
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to get battery level on this platform.')),
+        );
+      }
+    }
+  }
+
+  void _loadUserName() {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final display = user.displayName;
+        final fallback = user.email != null ? user.email!.split('@').first : null;
+        setState(() {
+          _userName = (display == null || display.isEmpty) ? (fallback ?? 'User') : display;
+        });
+      }
+    } catch (_) {
+      // ignore; keep default
+    }
+  }
+}
+
+// Reusable name tag widget. Keep this small and customizable.
+class _NameTag extends StatelessWidget {
+  final String name;
+  final Color avatarColor;
+  final int charge;
+  final VoidCallback? onTap;
+
+  const _NameTag({
+    Key? key,
+    required this.name,
+    required this.avatarColor,
+    required this.charge,
+    this.onTap,
+  }) : super(key: key);
+
+  Color _chargeColor(int c) {
+    if (c >= 70) return Colors.green.shade700;
+    if (c >= 30) return Colors.orange.shade700;
+    return Colors.red.shade700;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _chargeColor(charge);
+
+    return InkWell(
+      onTap: onTap,
+      child: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Avatar circle
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: avatarColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Name and small label
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      ' ',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              // Charge number
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$charge',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Charge',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
